@@ -86,7 +86,7 @@ class RemoteSensorConnection(object):
         Raises:
             socket.
         '''
-        if not (isinstance(host, str):
+        if not isinstance(host, str):
             raise InvalidArgumentsError(sys._getframe().f_code.co_name)
         socket.setdefaulttimeout(1)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
