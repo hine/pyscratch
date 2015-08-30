@@ -39,13 +39,16 @@ class RemoteSensorConnection(object):
             receive_broadcast_handler(Optional[function]): broadcastメッセージを受け取った場合のハンドラ
             receive_sensor_update_handler(Optional[function]): sensor-updateメッセージを受け取った場合のハンドラ
 
+        Reises:
+            ValueError: receive_broadcast_handler and receive_sensor_update_handler must be function or method
         '''
+        self._connected = False
         if receive_broadcast_handler is not None:
             if not (isinstance(receive_broadcast_handler, types.FunctionType) or isinstance(receive_broadcast_handler, types.MethodType)):
-                raise InvalidArgumentsError(sys._getframe().f_code.co_name)
+                raise ValueError('receive_broadcast_handler must be function or method')
         if receive_sensor_update_handler is not None:
             if not (isinstance(receive_sensor_update_handler, types.FunctionType) or isinstance(receive_sensor_update_handler, types.MethodType)):
-                raise InvalidArgumentsError(sys._getframe().f_code.co_name)
+                raise ValueError('receive_sensor_update_handler must be function or method')
         self._receive_broadcast_handler = receive_broadcast_handler or self._dummy_broadcast_handler
         self._receive_sensor_update_handler = receive_sensor_update_handler or self._dummy_sensor_data_handler
 
@@ -60,14 +63,14 @@ class RemoteSensorConnection(object):
         '''
         pass
 
-    def _dummy_sensor_data_handler(self, sonsor_data_dict):
+    def _dummy_sensor_data_handler(self, **sonsor_data):
         '''sensor-update message dummy handler
 
         sensor-updateメッセージを受け取った場合のダミーハンドラです。
         初期化時にハンドラが指定されなければこのハンドラが呼び出されます。
 
         Args:
-            sonsor_data_dict(dict): sendor-updateメッセージで受け取ったメッセージ
+            **sonsor_data: sendor-updateメッセージで受け取ったグローバル変数名と変数値が渡される。受け取ったあとは辞書として利用できる。
                 example:
                     {'sensor_a': 10, 'sensor_b': 20}
         '''
@@ -84,15 +87,18 @@ class RemoteSensorConnection(object):
             port (Optional[int]): Scratchと接続するポート(通常は指定の必要はありません)
 
         Raises:
-            socket.
+            ConnectionRefusedError: Cannot connect Scratch application
         '''
         if not isinstance(host, str):
-            raise InvalidArgumentsError(sys._getframe().f_code.co_name)
+            raise ValueError('host must be str')
+        if not isinstance(port, int):
+            raise ValueError('port must be int')
         socket.setdefaulttimeout(1)
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.sock.connect((host, port))
-        except:
+        except ConnectionRefusedError as e:
+            print('Cannot connect Scratch application.', e, file=sys.stderr)
             raise
         self._connected = True
         self._start_receiver()
@@ -102,20 +108,32 @@ class RemoteSensorConnection(object):
 
         Scratchから切断します。
         切断後はSocketは破棄されるので、同一のソケットは利用できません。
+        (接続時にソケットの静止をし直すので意識する必要はありません。)
 
         Raises:
-            socket.
+            OSError: something bad
         '''
-        self._stop_receiver()
-        try:
-            self.sock.shutdown(socket.SHUT_RDWR)
-        except:
-            raise
-        try:
-            self.sock.close()
-        except:
-            raise
-        self._connected = False
+        if self._connected:
+            self._stop_receiver()
+            try:
+                self.sock.shutdown(socket.SHUT_RDWR)
+            except OSError as e:
+                raise
+            try:
+                self.sock.close()
+            except OSError as e:
+                raise
+            self._connected = False
+
+    def is_connected(self):
+        '''Check Connection
+
+        Scratchと接続しているかどうかを返します。
+
+        Returns:
+            bool: 接続していればTrue、していなければFalse
+        '''
+        return self._connected
 
     def _start_receiver(self):
         '''Start Receiver thread
@@ -157,11 +175,17 @@ class RemoteSensorConnection(object):
                                 sensor_data_dict = {}
                                 while len(sensor_data):
                                     key = sensor_data.pop(0)
-                                    sensor_data_dict[key] = int(sensor_data.pop(0).strip())
-                                self._receive_sensor_update_handler(sensor_data_dict)
+                                    value = sensor_data.pop(0).strip()
+                                    try:
+                                        sensor_data_dict[key] = int(value)
+                                    except ValueError:
+                                        sensor_data_dict[key] = float(value)
+                                self._receive_sensor_update_handler(**sensor_data_dict)
                                 pass
                             receive_buffer = b''
-        except:
+        except (OSError, ConnectionResetError) as e:
+            print('Receiver caught a error.', e, file=sys.stderr)
+            print('Receiver thread stoped.')
             raise
 
     def send_broadcast(self, message):
@@ -170,34 +194,50 @@ class RemoteSensorConnection(object):
         broadcastメッセージの送信を行います。
         日本語を含むutf-8文字の送信が可能ですが、Scratch側で先にメッセージとして登録していないとScratch側で文字化けします。
 
-        args:
+        Args:
             message(str): broadcastメッセージとして送信するメッセージ
-        '''
-        message_data = ('broadcast "' + message + '"').encode('utf-8')
-        self.sock.sendall(len(message_data).to_bytes(4, byteorder='big') + message_data)
 
-    def send_sensor_update(self, sensor_data_dict):
+        Raises:
+            ValueError: message must be str
+            BrokenPipeError: Socket is broken
+        '''
+        if not isinstance(message, str):
+            raise ValueError('message must be str')
+        message_data = ('broadcast "' + message + '"').encode('utf-8')
+        try:
+            self.sock.sendall(len(message_data).to_bytes(4, byteorder='big') + message_data)
+        except BrokenPipeError as e:
+            print('Cannot send broadcast message.', e, file=sys.stderr)
+            raise
+
+    def send_sensor_update(self, **sensor_data):
         '''Send sensor-update message
 
         sensor-updateメッセージの送信を行います。
         センサー名として日本語を含むutf-8文字の送信が可能ですが、Scratch側で先にメッセージとして登録していないとScratch側で文字化けします。
         センサー値は数値(int/float)である必要があります。
 
-        args:
-            sensor_data_dict(dict): sensor-updateとして送信する、センサー名(str)をキーとしセンサー値(int/float)をバリューとする辞書データ
+        Args:
+            **sensor_data: sensor-updateとして送信する、センサー名とセンサー値を、センサー名=センサー値で並べる。任意の数可能
                 example:
-                    {'sensor_a': 10, 'sensor_b': 20}
+                    send_sensor_update(sensor_a=10, sensor_b=20)
+
+        Raises:
+            ValueError: sensor-value must be str
+            BrokenPipeError: Socket is broken
         '''
         message = 'sensor-update '
-        for name, value in sensor_data_dict.items():
+        for name, value in sensor_data.items():
+            if not (isinstance(value, int) or isinstance(value, float)):
+                raise ValueError('sensor-value must be str')
             message += '"' + name + '" ' + str(value) + ' '
         message_data = message.encode('utf-8')
-        self.sock.sendall(len(message_data).to_bytes(4, byteorder='big') + message_data)
+        try:
+            self.sock.sendall(len(message_data).to_bytes(4, byteorder='big') + message_data)
+        except BrokenPipeError as e:
+            print('Cannot send sensor-update message.', e, file=sys.stderr)
+            raise
 
-class InvalidArgumentsError(Exception):
-    '''Invalid Argument Error
-    '''
-    pass
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if __name__ == '__main__':
@@ -210,21 +250,23 @@ if __name__ == '__main__':
         def broadcast_handler(self, message):
             print('[receive] broadcast:', message)
 
-        def sonsor_update_handler(self, sensor_data_dict):
-            for name, value in sensor_data_dict.items():
+        def sonsor_update_handler(self, **sensor_data):
+            for name, value in sensor_data.items():
                 print('[receive] sensor-update:', name, value)
 
     rh = ReceiveHandler()
     rsc = RemoteSensorConnection(rh.broadcast_handler, rh.sonsor_update_handler)
     rsc.connect()
     time.sleep(2)
-    rsc.send_broadcast('TEST')
+    rsc.send_broadcast('test_message')
     time.sleep(4)
-    rsc.send_sensor_update({'TEST': 0, "TEST2": 0})
+    # 複数の数値をまとめて送ることができる
+    rsc.send_sensor_update(test_sensor1=0, test_sensor2=0)
     time.sleep(4)
-    rsc.send_sensor_update({'TEST': 100, "TEST2": 0})
+    # 小数値を送ることも可能
+    rsc.send_sensor_update(test_sensor1=0.5)
     time.sleep(4)
-    rsc.send_sensor_update({'TEST': 0, "TEST2": 0})
+    rsc.send_sensor_update(test_sensor1=0)
     try:
         while True:
             time.sleep(1)
