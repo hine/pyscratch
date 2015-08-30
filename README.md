@@ -15,7 +15,7 @@ $ pip install .
 example:  
     >>> import scratch  
     >>> class ReceiveHandler(object):  
-        \>\>\>     def broadcast_handler(self, message):  
+    >>>     def broadcast_handler(self, message):  
         ...         print('[receive] broadcast:', message)  
         \>\>\>     def sonsor_update_handler(self, \*\*sensor_data):  
         ...         for name, value in sensor_data.items():  
