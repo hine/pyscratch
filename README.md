@@ -13,11 +13,11 @@ $ pip install .
 ## Usage
 
 example:  
-    >>> import scratch  
-    >>> class ReceiveHandler(object):  
-    >>>     def broadcast_handler(self, message):  
+        >>> import scratch  
+        >>> class ReceiveHandler(object):  
+        >>>     def broadcast_handler(self, message):  
         ...         print('[receive] broadcast:', message)  
-        \>\>\>     def sonsor_update_handler(self, \*\*sensor_data):  
+        >>>     def sonsor_update_handler(self, \*\*sensor_data):  
         ...         for name, value in sensor_data.items():  
         ...             print('[receive] sensor-update:', name, value)  
         \>\>\> rh = ReceiveHandler()  
