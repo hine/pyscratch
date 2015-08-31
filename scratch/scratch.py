@@ -244,6 +244,7 @@ if __name__ == '__main__':
 
     import time
 
+
     class ReceiveHandler(object):
         '''[SAMPLE] Received data handler class
         '''
@@ -254,18 +255,35 @@ if __name__ == '__main__':
             for name, value in sensor_data.items():
                 print('[receive] sensor-update:', name, value)
 
+
+    print('Scratch Remote Sensor Connection Test')
+    print('')
+
+    # 受信用のハンドラのインスタンス生成
     rh = ReceiveHandler()
+
+    # RemoteSensorConnectionのインスタンス生成
     rsc = RemoteSensorConnection(rh.broadcast_handler, rh.sonsor_update_handler)
-    rsc.connect()
+
+    # 接続する
+    try:
+        rsc.connect()
+    except ConnectionRefusedError as e:
+        print('Scratchを起動してから実行してください')
+        exit()
     time.sleep(2)
+    print('[send] broadcast: test_message')
     rsc.send_broadcast('test_message')
-    time.sleep(4)
+    time.sleep(3)
     # 複数の数値をまとめて送ることができる
+    print('[send] sensor-update: test_sensor1=0, test_sensor2=0')
     rsc.send_sensor_update(test_sensor1=0, test_sensor2=0)
-    time.sleep(4)
+    time.sleep(3)
     # 小数値を送ることも可能
+    print('[send] sensor-update: test_sensor1=0.5')
     rsc.send_sensor_update(test_sensor1=0.5)
-    time.sleep(4)
+    time.sleep(3)
+    print('[send] sensor-update: test_sensor1=0')
     rsc.send_sensor_update(test_sensor1=0)
     try:
         while True:

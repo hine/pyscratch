@@ -9,7 +9,7 @@ http://opensource.org/licenses/mit-license.php
 '''
 
 __author__ = 'Daisuke IMAI <hine.gdw@gmail.com>'
-__version__ = '0.0.9'
+__version__ = '0.1.0'
 __date__ = '31 Aug. 2015'
 
 from scratch.scratch import RemoteSensorConnection
