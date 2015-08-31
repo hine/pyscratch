@@ -33,5 +33,5 @@ rsc.disconnect()
 
 PyDoc Documents are in "docs" directory.  
 
-## ライセンス
+## License
 This software is released under the MIT License, see LICENSE file.
