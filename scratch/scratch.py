@@ -248,9 +248,11 @@ if __name__ == '__main__':
     class ReceiveHandler(object):
         '''[SAMPLE] Received data handler class
         '''
+        @staticmethod
         def broadcast_handler(message):
             print('[receive] broadcast:', message)
 
+        @staticmethod
         def sonsor_update_handler(**sensor_data):
             for name, value in sensor_data.items():
                 print('[receive] sensor-update:', name, value)
