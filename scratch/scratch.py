@@ -248,10 +248,10 @@ if __name__ == '__main__':
     class ReceiveHandler(object):
         '''[SAMPLE] Received data handler class
         '''
-        def broadcast_handler(self, message):
+        def broadcast_handler(message):
             print('[receive] broadcast:', message)
 
-        def sonsor_update_handler(self, **sensor_data):
+        def sonsor_update_handler(**sensor_data):
             for name, value in sensor_data.items():
                 print('[receive] sensor-update:', name, value)
 
@@ -260,10 +260,9 @@ if __name__ == '__main__':
     print('')
 
     # 受信用のハンドラのインスタンス生成
-    rh = ReceiveHandler()
 
     # RemoteSensorConnectionのインスタンス生成
-    rsc = RemoteSensorConnection(rh.broadcast_handler, rh.sonsor_update_handler)
+    rsc = RemoteSensorConnection(ReceiveHandler.broadcast_handler, ReceiveHandler.sonsor_update_handler)
 
     # 接続する
     try:
