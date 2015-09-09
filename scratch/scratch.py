@@ -98,7 +98,6 @@ class RemoteSensorConnection(object):
         try:
             self.sock.connect((host, port))
         except ConnectionRefusedError as e:
-            print('Cannot connect Scratch application.', e, file=sys.stderr)
             raise
         self._connected = True
         self._start_receiver()
@@ -261,8 +260,6 @@ if __name__ == '__main__':
     print('Scratch Remote Sensor Connection Test')
     print('')
 
-    # 受信用のハンドラのインスタンス生成
-
     # RemoteSensorConnectionのインスタンス生成
     rsc = RemoteSensorConnection(ReceiveHandler.broadcast_handler, ReceiveHandler.sonsor_update_handler)
 
@@ -270,7 +267,7 @@ if __name__ == '__main__':
     try:
         rsc.connect()
     except ConnectionRefusedError as e:
-        print('Scratchを起動してから実行してください')
+        print('Cannot connect Scratch application.', e, file=sys.stderr)
         exit()
     time.sleep(2)
     print('[send] broadcast: test_message')
