@@ -1,6 +1,6 @@
 # coding:utf-8
 '''
-Scratch Remote Sensor Connection Library for Python3
+Scratch Remote Sensor Connection Library for Python2.7
 
 Copyright (c) 2015 Daisuke IMAI <hine.gdw@gmail.com>
 

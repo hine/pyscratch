@@ -2,11 +2,13 @@
 
 ## Overview
 
-This module make easier to use Scratch Remote Connection from Python3.  
+This module make easier to use Scratch Remote Connection from Python2.7.  
+
+if you use with Python3, see master branch.
 
 ## Installation
 
-$ git clone git@github.com:hine/pyscratch.git  
+$ git clone -b 2.7 git@github.com:hine/pyscratch.git  
 $ cd pyscratch  
 $ pip install .  
 

@@ -6,9 +6,13 @@ Copyright (c) 2015 Daisuke IMAI <hine.gdw@gmail.com>
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 '''
+from __future__ import (
+        absolute_import, division,
+        print_function, unicode_literals)
 import sys
 import types
 import socket
+import struct
 import threading
 
 SCRATCH_HOST = '127.0.0.1' # localhost
@@ -87,9 +91,9 @@ class RemoteSensorConnection(object):
             port (Optional[int]): Scratchと接続するポート(通常は指定の必要はありません)
 
         Raises:
-            ConnectionRefusedError: Cannot connect Scratch application
+            socket.error: Cannot connect Scratch application
         '''
-        if not isinstance(host, str):
+        if not isinstance(host, unicode):
             raise ValueError('host must be str')
         if not isinstance(port, int):
             raise ValueError('port must be int')
@@ -97,8 +101,7 @@ class RemoteSensorConnection(object):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.sock.connect((host, port))
-        except ConnectionRefusedError as e:
-            print('Cannot connect Scratch application.', e, file=sys.stderr)
+        except socket.error as e:
             raise
         self._connected = True
         self._start_receiver()
@@ -163,7 +166,7 @@ class RemoteSensorConnection(object):
                 if len(data) > 0:
                     receive_buffer += data
                     if len(receive_buffer) >= 4:
-                        received_data_len = int.from_bytes(receive_buffer[:4], byteorder='big')
+                        received_data_len = struct.unpack(">i", receive_buffer[:4])[0]
                         if len(receive_buffer) == 4 + received_data_len:
                             received_data = receive_buffer[4:].decode('utf-8')
                             if received_data.startswith('broadcast'):
@@ -183,7 +186,7 @@ class RemoteSensorConnection(object):
                                 self._receive_sensor_update_handler(**sensor_data_dict)
                                 pass
                             receive_buffer = b''
-        except (OSError, ConnectionResetError) as e:
+        except (OSError, socket.error) as e:
             print('Receiver caught a error.', e, file=sys.stderr)
             print('Receiver thread stoped.')
             raise
@@ -201,12 +204,12 @@ class RemoteSensorConnection(object):
             ValueError: message must be str
             BrokenPipeError: Socket is broken
         '''
-        if not isinstance(message, str):
+        if not isinstance(message, unicode):
             raise ValueError('message must be str')
         message_data = ('broadcast "' + message + '"').encode('utf-8')
         try:
-            self.sock.sendall(len(message_data).to_bytes(4, byteorder='big') + message_data)
-        except BrokenPipeError as e:
+            self.sock.sendall(struct.pack('>i', len(message_data)) + message_data)
+        except socket.error as e:
             print('Cannot send broadcast message.', e, file=sys.stderr)
             raise
 
@@ -233,10 +236,15 @@ class RemoteSensorConnection(object):
             message += '"' + name + '" ' + str(value) + ' '
         message_data = message.encode('utf-8')
         try:
-            self.sock.sendall(len(message_data).to_bytes(4, byteorder='big') + message_data)
-        except BrokenPipeError as e:
+            self.sock.sendall(struct.pack('>i', len(message_data)) + message_data)
+        except socket.error as e:
             print('Cannot send sensor-update message.', e, file=sys.stderr)
             raise
+
+    def _to_bytes(self, n, length, byteorder='big'):
+        h = '%x' % n
+        s = ('0'*(len(h) % 2) + h).zfill(length*2).decode('hex')
+        return s if byteorder == 'big' else s[::-1]
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -261,26 +269,24 @@ if __name__ == '__main__':
     print('Scratch Remote Sensor Connection Test')
     print('')
 
-    # 受信用のハンドラのインスタンス生成
-
-    # RemoteSensorConnectionのインスタンス生成
+    # Make RemoteSensorConnection instance
     rsc = RemoteSensorConnection(ReceiveHandler.broadcast_handler, ReceiveHandler.sonsor_update_handler)
 
-    # 接続する
+    # Connect to Scratch 1.4 application
     try:
         rsc.connect()
-    except ConnectionRefusedError as e:
-        print('Scratchを起動してから実行してください')
+    except socket.error as e:
+        print('Cannot connect Scratch application.', e, file=sys.stder)
         exit()
     time.sleep(2)
     print('[send] broadcast: test_message')
     rsc.send_broadcast('test_message')
     time.sleep(3)
-    # 複数の数値をまとめて送ることができる
+    # send plural values
     print('[send] sensor-update: test_sensor1=0, test_sensor2=0')
     rsc.send_sensor_update(test_sensor1=0, test_sensor2=0)
     time.sleep(3)
-    # 小数値を送ることも可能
+    # send fractional value
     print('[send] sensor-update: test_sensor1=0.5')
     rsc.send_sensor_update(test_sensor1=0.5)
     time.sleep(3)
