@@ -2,9 +2,9 @@
 
 ## Overview
 
-This module make easier to use Scratch Remote Connection from Python2.7.  
+This module make easier to use Scratch Remote Connection from Python 2.7.  
 
-if you use with Python3, see master branch.
+if you use with Python3, see [master branch](https://github.com/hine/pyscratch/tree/master).
 
 ## Installation
 

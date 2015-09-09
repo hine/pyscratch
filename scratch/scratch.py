@@ -202,7 +202,7 @@ class RemoteSensorConnection(object):
 
         Raises:
             ValueError: message must be str
-            BrokenPipeError: Socket is broken
+            socket.error: Socket is broken
         '''
         if not isinstance(message, unicode):
             raise ValueError('message must be str')
@@ -227,7 +227,7 @@ class RemoteSensorConnection(object):
 
         Raises:
             ValueError: sensor-value must be str
-            BrokenPipeError: Socket is broken
+            socket.error: Socket is broken
         '''
         message = 'sensor-update '
         for name, value in sensor_data.items():
