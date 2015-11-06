@@ -8,9 +8,9 @@ if you use with Python 2.7, see [2.7 branch](https://github.com/hine/pyscratch/t
 
 ## Installation
 
-$ git clone git@github.com:hine/pyscratch.git  
+$ git clone https://github.com/hine/pyscratch.git  
 $ cd pyscratch  
-$ pip install .  
+$ pip install ./  
 
 ## Usage
 
