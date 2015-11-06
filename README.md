@@ -22,7 +22,7 @@ class ScratchReceiver(object):
   def broadcast_handler(message):
     print('[receive] broadcast:', message)
   @staticmethod
-  def sonsor_update_handler(\*\*sensor_data):
+  def sonsor_update_handler(**sensor_data):
     for name, value in sensor_data.items():
       print('[receive] sensor-update:', name, value)
 rsc = RemoteSensorConnection(ScratchReceiver.broadcast_handler, ScratchReceiver.sonsor_update_handler)  
