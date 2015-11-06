@@ -4,11 +4,11 @@
 
 This module make easier to use Scratch Remote Connection from Python 2.7.  
 
-if you use with Python3, see [master branch](https://github.com/hine/pyscratch/tree/master).
+If you use with Python3, see [master branch](https://github.com/hine/pyscratch/tree/master).
 
 ## Installation
 
-$ git clone -b 2.7 git@github.com:hine/pyscratch.git  
+$ git clone -b 2.7 https://github.com/hine/pyscratch.git  
 $ cd pyscratch  
 $ pip install .  
 
@@ -22,7 +22,7 @@ class ScratchReceiver(object):
   def broadcast_handler(message):
     print('[receive] broadcast:', message)
   @staticmethod
-  def sonsor_update_handler(\*\*sensor_data):
+  def sonsor_update_handler(**sensor_data):
     for name, value in sensor_data.items():
       print('[receive] sensor-update:', name, value)
 rsc = RemoteSensorConnection(ScratchReceiver.broadcast_handler, ScratchReceiver.sonsor_update_handler)  

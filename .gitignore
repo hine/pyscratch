@@ -58,3 +58,6 @@ target/
 
 # pyenv virtualenv
 .python-version
+
+# Mac OS X
+.DS_Store
