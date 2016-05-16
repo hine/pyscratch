@@ -25,7 +25,7 @@ class ScratchReceiver(object):
   def sonsor_update_handler(**sensor_data):
     for name, value in sensor_data.items():
       print('[receive] sensor-update:', name, value)
-rsc = RemoteSensorConnection(ScratchReceiver.broadcast_handler, ScratchReceiver.sonsor_update_handler)  
+rsc = scratch.RemoteSensorConnection(ScratchReceiver.broadcast_handler, ScratchReceiver.sonsor_update_handler)  
 rsc.connect()  
 rsc.send_broadcast('connected')  
 rsc.send_sensor_update(test_sonsor=100)  
