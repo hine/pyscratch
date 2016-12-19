@@ -93,7 +93,7 @@ class RemoteSensorConnection(object):
         Raises:
             socket.error: Cannot connect Scratch application
         '''
-        if not isinstance(host, unicode):
+        if not (isinstance(host, unicode) or isinstance(host, str)):
             raise ValueError('host must be str')
         if not isinstance(port, int):
             raise ValueError('port must be int')
@@ -204,7 +204,7 @@ class RemoteSensorConnection(object):
             ValueError: message must be str
             socket.error: Socket is broken
         '''
-        if not isinstance(message, unicode):
+        if not (isinstance(message, unicode) or isinstance(message, str)):
             raise ValueError('message must be str')
         message_data = ('broadcast "' + message + '"').encode('utf-8')
         try:
