@@ -228,7 +228,7 @@ class RemoteSensorConnection(object):
         message = 'sensor-update '
         for name, value in sensor_data.items():
             if not (isinstance(value, int) or isinstance(value, float) or isinstance(value, str)):
-                raise ValueError('sensor-value must be int, fload, or str')
+                raise ValueError('sensor-value must be int, float, or str')
             message += '"' + name + '" ' + str(value) + ' '
         message_data = message.encode('utf-8')
         try:
