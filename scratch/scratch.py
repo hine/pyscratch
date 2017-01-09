@@ -214,7 +214,7 @@ class RemoteSensorConnection(object):
 
         sensor-updateメッセージの送信を行います。
         センサー名として日本語を含むutf-8文字の送信が可能ですが、Scratch側で先にメッセージとして登録していないとScratch側で文字化けします。
-        センサー値は数値(int/float)である必要があります。
+        センサー値は数値(int/float)または文字列(str)である必要があります。
 
         Args:
             **sensor_data: sensor-updateとして送信する、センサー名とセンサー値を、センサー名=センサー値で並べる。任意の数可能
@@ -227,8 +227,8 @@ class RemoteSensorConnection(object):
         '''
         message = 'sensor-update '
         for name, value in sensor_data.items():
-            if not (isinstance(value, int) or isinstance(value, float)):
-                raise ValueError('sensor-value must be str')
+            if not (isinstance(value, int) or isinstance(value, float) or isinstance(value, str)):
+                raise ValueError('sensor-value must be int, fload, or str')
             message += '"' + name + '" ' + str(value) + ' '
         message_data = message.encode('utf-8')
         try:
